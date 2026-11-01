@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>UberControl</title>
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="UberControl">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+:root { --bg: #0a0a0b; --txt: #f4f4f5; --mut: #8b8b94; --sub: #55555d; --line: #1b1b1f; --fill: #131316; --sel: #25252a; --warn: #fbbf24; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+html { background: var(--bg); -webkit-text-size-adjust: 100%; }
+body { background: var(--bg); color: var(--txt); font-family: -apple-system, system-ui, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; padding-bottom: calc(6rem + env(safe-area-inset-bottom)); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+header { position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: baseline; padding: calc(.875rem + env(safe-area-inset-top)) 1.25rem .875rem; background: rgba(10,10,11,.85); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+h1 { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
+h2 { font-size: .8125rem; font-weight: 500; color: var(--mut); }
+main { max-width: 28rem; margin: 0 auto; padding: .25rem 1.25rem 1rem; display: flex; flex-direction: column; gap: 1.75rem; }
+section { display: flex; flex-direction: column; gap: 1rem; }
+label { display: block; font-size: .75rem; color: var(--mut); margin-bottom: .375rem; }
+input { display: block; width: 100%; min-width: 0; min-height: 2.75rem; padding: .625rem .875rem; background: var(--fill); border: none; border-radius: .75rem; color: var(--txt); font-size: 1rem; outline: none; color-scheme: dark; -webkit-appearance: none; appearance: none; -webkit-user-select: text; user-select: text; box-shadow: inset 0 0 0 1px transparent; transition: box-shadow .15s; }
+input[type=date]::-webkit-date-and-time-value { text-align: left; }
+input:focus { box-shadow: inset 0 0 0 1px var(--mut); }
+button { cursor: pointer; border: none; background: none; color: inherit; font-family: inherit; touch-action: manipulation; }
+
+.badge { font-size: .6875rem; color: var(--sub); }
+.grid { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: .75rem; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
+.lista { display: flex; flex-direction: column; }
+.peq { font-size: .75rem; color: var(--mut); }
+.pie { font-size: .75rem; color: var(--sub); text-align: center; }
+.dot { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; flex-shrink: 0; }
+.btn { width: 100%; padding: .875rem; background: var(--txt); color: var(--bg); font-weight: 600; border-radius: .875rem; transition: transform .1s; }
+.btn:active { transform: scale(.98); }
+.link { font-size: .75rem; color: var(--mut); text-decoration: underline; text-underline-offset: 3px; padding: .25rem; }
+
+.nav { width: 2.5rem; height: 2.5rem; font-size: 1.5rem; line-height: 1; color: var(--mut); }
+.nav:disabled { opacity: .25; }
+.selector { flex: 1; min-width: 0; min-height: 2.5rem; display: flex; align-items: center; justify-content: center; gap: .375rem; font-size: .9375rem; font-weight: 500; }
+.selector #etq { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.selector #selFlecha { font-size: .75rem; color: var(--sub); transition: transform .2s; }
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chips button { padding: .375rem .75rem; background: var(--fill); border-radius: 9999px; font-size: .8125rem; }
+.chips button:active { background: var(--sel); }
+.accion { padding: .8125rem .25rem; background: var(--fill); border-radius: .875rem; font-size: .8125rem; font-weight: 500; transition: transform .1s; }
+.accion:active { transform: scale(.97); }
+
+.tabs { display: grid; grid-template-columns: var(--cols, 1fr 1fr auto); padding: .1875rem; background: var(--fill); border-radius: .75rem; font-size: .8125rem; font-weight: 500; }
+.tabs button { padding: .5rem .25rem; color: var(--mut); border-radius: .5625rem; }
+.tabs .on { background: var(--sel); color: var(--txt); }
+#tabs { --cols: 1fr 1.4fr 1fr; margin-bottom: 1.25rem; }
+#filtros { --cols: repeat(4, 1fr); font-size: .75rem; }
+.periodo { display: flex; padding: .125rem; background: var(--fill); border-radius: 9999px; font-size: .75rem; font-weight: 500; }
+.periodo button { padding: .3125rem .75rem; color: var(--mut); border-radius: 9999px; }
+.periodo .on { background: var(--sel); color: var(--txt); }
+
+#aviso { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .75rem 1rem; background: var(--fill); border-radius: .875rem; }
+#neto { font-size: 3rem; font-weight: 300; letter-spacing: -.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.flecha { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; margin-right: -.5rem; font-size: .875rem; color: var(--mut); transition: transform .2s; }
+#desglose { margin-top: .75rem; }
+.fila { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .875rem 0; border-top: 1px solid var(--line); font-size: .9375rem; text-align: left; }
+.fila:active { opacity: .6; }
+.nombre { display: flex; align-items: center; gap: .625rem; }
+
+.item { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .875rem 0; border-bottom: 1px solid var(--line); }
+.lista .item:last-child { border-bottom: none; }
+.monto-item { font-size: 1rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.nota { margin-top: .1875rem; font-size: .75rem; color: var(--mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vacio { padding: 2.5rem 1rem; text-align: center; font-size: .875rem; line-height: 1.7; color: var(--sub); }
+
+.tabbar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(3, 1fr); padding-bottom: env(safe-area-inset-bottom); background: rgba(10,10,11,.88); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid var(--line); }
+.tabbar button { display: flex; flex-direction: column; align-items: center; gap: .1875rem; padding: .625rem 0 .6875rem; font-size: .625rem; font-weight: 500; color: var(--sub); }
+.tabbar .on { color: var(--txt); }
+.tabbar svg { width: 1.375rem; height: 1.375rem; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(5rem + env(safe-area-inset-bottom)); z-index: 70; display: flex; align-items: center; gap: .75rem; max-width: 92vw; padding: .625rem 1rem; background: var(--txt); color: var(--bg); border-radius: 9999px; font-size: .875rem; font-weight: 500; white-space: nowrap; }
+.toast .link { color: var(--bg); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>UberControl</h1>
+    <span class="badge">v2.3</span>
+</header>
+
+<main>
+    <!-- Período: una sola fila; al tocar la tarjeta se abre el panel para elegir -->
+    <div id="periodoBloque" style="display: flex; flex-direction: column; gap: .5rem">
+        <div class="row" style="gap: .5rem">
+            <button class="nav" id="ant" aria-label="Anterior">‹</button>
+            <button class="selector" id="selector" aria-label="Elegir período">
+                <span id="etq"></span>
+                <span id="selFlecha">▾</span>
+            </button>
+            <button class="nav" id="sig" aria-label="Siguiente">›</button>
+        </div>
+        <div id="panel" style="display: flex; flex-direction: column; gap: .875rem" hidden>
+            <div id="periodo" class="tabs" style="--cols: repeat(5, 1fr); font-size: .75rem">
+                <button data-p="dia">Día</button>
+                <button data-p="semana">Semana</button>
+                <button data-p="mes">Mes</button>
+                <button data-p="todo">Todo</button>
+                <button data-p="fechas">Fechas</button>
+            </div>
+            <div id="rango" style="display: flex; flex-direction: column; gap: .75rem" hidden>
+                <div id="rapidos" class="chips">
+                    <button data-r="hoy">Hoy</button>
+                    <button data-r="ayer">Ayer</button>
+                    <button data-r="semana">Esta semana</button>
+                    <button data-r="mes">Este mes</button>
+                    <button data-r="mespas">Mes pasado</button>
+                </div>
+                <div class="grid">
+                    <div><label>Desde</label><input type="date" id="f-desde"></div>
+                    <div><label>Hasta</label><input type="date" id="f-hasta"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INICIO -->
+    <section id="v-inicio">
+        <div id="aviso" hidden>
+            <p id="avisoTxt" class="peq" style="color: var(--warn)"></p>
+            <button class="link" onclick="exportarCSV()" style="flex-shrink: 0">Exportar ahora</button>
+        </div>
+        <div id="principal">
+            <p class="peq">Ganancia neta</p>
+            <div id="cabecera" class="row" style="cursor: pointer; margin-top: .25rem">
+                <p id="neto">$0</p>
+                <span id="flecha" class="flecha">▾</span>
+            </div>
+            <div id="desglose" hidden></div>
+        </div>
+
+        <h2 style="margin-top: .25rem">Cargar</h2>
+        <div class="grid" style="--n: 3">
+            <button class="accion" onclick="cargar('ganancia')">+ Jornada</button>
+            <button class="accion" onclick="cargar('combustible')">+ Combustible</button>
+            <button class="accion" onclick="cargar('otros')">+ Gasto</button>
+        </div>
+
+        <div class="row" style="margin-top: .25rem">
+            <h2>Últimos movimientos</h2>
+            <button class="link" onclick="ir('historial')">Ver historial</button>
+        </div>
+        <div id="ultimos" class="lista"></div>
+    </section>
+
+    <!-- CARGAR -->
+    <section id="v-cargar" hidden>
+        <div class="row">
+            <h2 id="tituloForm"></h2>
+            <button type="button" class="link" id="volver">‹ Volver</button>
+        </div>
+        <div>
+            <div id="tabs" class="tabs">
+                <button data-t="ganancia">Jornada</button>
+                <button data-t="combustible">Combustible</button>
+                <button data-t="otros">⋮ Otros</button>
+            </div>
+            <form id="form" style="display: flex; flex-direction: column; gap: 1rem">
+                <div class="grid">
+                    <div>
+                        <div class="row" style="margin-bottom: .25rem">
+                            <label style="margin: 0">Fecha</label>
+                            <span><button type="button" class="link" data-d="0">Hoy</button> <button type="button" class="link" data-d="-1">Ayer</button></span>
+                        </div>
+                        <input type="date" id="fecha" required>
+                    </div>
+                    <div><label>Monto ($)</label><input type="number" step="any" min="0.01" inputmode="decimal" id="monto" placeholder="0" required></div>
+                </div>
+                <div><label>Notas (opcional)</label><input type="text" id="notas" enterkeyhint="done"></div>
+                <button class="btn" id="guardar"></button>
+                <button type="button" id="cancelar" hidden style="font-size: .875rem; color: var(--mut); padding: .25rem">Cancelar edición</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- HISTORIAL -->
+    <section id="v-historial" hidden>
+        <div class="row">
+            <h2>Historial</h2>
+            <div class="row">
+                <button class="link" onclick="$('archivo').click()">Importar CSV</button>
+                <button class="link" onclick="exportarCSV()">Exportar CSV</button>
+            </div>
+        </div>
+        <div id="filtros" class="tabs"></div>
+        <p id="cuenta" class="peq"></p>
+        <div id="lista" class="lista"></div>
+        <p class="pie">Tocá un registro para corregirlo</p>
+        <p id="respaldo" class="pie"></p>
+        <button id="btnRecuperar" class="link" style="align-self: center" hidden></button>
+    </section>
+
+    <!-- DETALLE -->
+    <section id="v-detalle" hidden>
+        <div class="row">
+            <h2>Detalle</h2>
+            <div class="periodo" id="agrupar">
+                <button data-g="semana">Por semana</button>
+                <button data-g="mes">Por mes</button>
+            </div>
+        </div>
+        <div id="grupos" class="lista"></div>
+        <p class="pie">Tocá una fila para ver ese período</p>
+    </section>
+</main>
+
+<nav id="tabbar" class="tabbar">
+    <button data-v="inicio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Inicio
+    </button>
+    <button data-v="detalle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Detalle
+    </button>
+    <button data-v="historial">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Historial
+    </button>
+</nav>
+
+<div id="toast" class="toast" hidden></div>
+<input type="file" id="archivo" hidden>
+
+<script>
+const $ = id => document.getElementById(id);
+const T = {
+    ganancia:    { col: '#4ade80', nom: 'Ganancias',   sub: 'Jornada',              tit: 'Nueva jornada',              ph: 'Ej: Zona centro, lluvia...' },
+    combustible: { col: '#f87171', nom: 'Combustible', sub: 'Carga de combustible', tit: 'Nueva carga de combustible', ph: 'Ej: Tanque lleno, GNC...' },
+    otros:       { col: '#fbbf24', nom: 'Otros',       sub: 'Otro gasto',           tit: 'Nuevo gasto',                ph: '¿En qué? Peaje, lavado, comida...' }
+};
+const VISTAS = ['inicio', 'cargar', 'historial', 'detalle'];
+
+// Leer y escribir ajustes sin que un almacenamiento lleno o bloqueado rompa la app
+const verLS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const ponerLS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+// ---- Fechas ----
+const aISO = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const hoy = () => aISO(new Date());
+const sumarDias = (iso, n) => { const [a, m, d] = iso.split('-').map(Number); return aISO(new Date(a, m - 1, d + n)); };
+// Lunes de la semana a la que pertenece una fecha (las semanas van de lunes a domingo)
+const lunes = iso => { const [a, m, d] = iso.split('-').map(Number); const f = new Date(a, m - 1, d); f.setDate(f.getDate() - (f.getDay() + 6) % 7); return aISO(f); };
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const corto = i => MESES[i].slice(0, 3);
+const fechaCorta = iso => {
+    const [a, m, d] = iso.split('-').map(Number);
+    return `${DIAS[new Date(a, m - 1, d).getDay()]} ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}${a !== new Date().getFullYear() ? '/' + String(a).slice(2) : ''}`;
+};
+const etiqueta = (k, modo = agrupar) => {
+    const [a, m, d] = k.split('-').map(Number);
+    if (modo === 'mes') return `${MESES[m - 1][0].toUpperCase()}${MESES[m - 1].slice(1)} ${a}`;
+    const f = new Date(a, m - 1, d + 6);
+    const r = f.getMonth() === m - 1 ? `${d} al ${f.getDate()} ${corto(m - 1)}` : `${d} ${corto(m - 1)} al ${f.getDate()} ${corto(f.getMonth())}`;
+    return a === new Date().getFullYear() ? r : `${r} ’${String(a).slice(2)}`;
+};
+
+// ---- Utilidades ----
+const leer = (k, def) => { try { return JSON.parse(verLS(k)) || def; } catch (e) { return def; } };
+const escapar = s => s.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+const formato = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+const plata = n => `${n < 0 ? '-' : ''}$${formato.format(Math.abs(n))}`;
+const ordenar = a => a.sort((x, y) => y.fecha.localeCompare(x.fecha) || y.id - x.id);
+// Ids siempre distintos (un id repetido borraría dos registros a la vez)
+let ultimoId = 0;
+const nid = () => (ultimoId = Math.max(ultimoId + 1, Date.now() * 1000));
+const diasDesde = iso => Math.round((Date.parse(hoy()) - Date.parse(iso)) / 864e5);
+
+// Copia de seguridad dentro del mismo celular (IndexedDB). Si algo vacía el almacenamiento normal
+// (otra app del mismo sitio, por ejemplo), los datos se recuperan de acá.
+const idb = new Promise(res => {
+    try {
+        const r = indexedDB.open('uber', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('k');
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => res(null);
+    } catch (e) { res(null); }
+});
+const espejo = async lista => {
+    const db = await idb;
+    if (!db) return;
+    try { db.transaction('k', 'readwrite').objectStore('k').put(JSON.stringify(lista), 'datos'); } catch (e) {}
+};
+const leerEspejo = async () => {
+    const db = await idb;
+    if (!db) return null;
+    return new Promise(res => {
+        try {
+            const q = db.transaction('k').objectStore('k').get('datos');
+            q.onsuccess = () => { try { res(q.result ? JSON.parse(q.result) : null); } catch (e) { res(null); } };
+            q.onerror = () => res(null);
+        } catch (e) { res(null); }
+    });
+};
+let espejoListo = false;
+const guardarLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
+const guardar = () => {
+    if (!guardarLS('uber_datos', datos)) alert('⚠️ No se pudo guardar en este dispositivo. Exportá un respaldo (CSV) cuanto antes.');
+    if (espejoListo) espejo(datos);
+};
+
+function toast(msg, accion, fn) {
+    const t = $('toast');
+    t.innerHTML = `<span>${msg}</span>${accion ? `<button class="link" id="toastBtn">${accion}</button>` : ''}`;
+    t.hidden = false;
+    if (accion) $('toastBtn').onclick = () => { fn(); t.hidden = true; };
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => t.hidden = true, accion ? 6000 : 2500);
+}
+
+// ---- Estado ----
+let periodo = verLS('uber_periodo') || 'semana', agrupar = verLS('uber_agrupar') || 'semana';
+let vista = 'inicio', filtro = 'todo', tipo = 'ganancia', editando = null, volverA = null, verTodas = false, abierto = false, panelAbierto = false;
+let ancla = hoy(), desde = lunes(hoy()), hasta = hoy(), diaCargado = hoy();
+
+// Un solo listado: {id, tipo, fecha, monto, notas}. Si hay datos de versiones anteriores, se convierten una vez
+// (los datos viejos no se borran).
+const crudo = verLS('uber_datos');
+let datos = leer('uber_datos', null);
+if (crudo && !datos) {   // lo guardado no se pudo leer: se conserva una copia aparte antes de seguir
+    ponerLS('uber_datos_corrupto', crudo);
+    setTimeout(() => alert('Los datos guardados estaban dañados. Se guardó una copia aparte y se intenta recuperar la copia de seguridad.'), 300);
+}
+if (!datos) {
+    datos = [];
+    leer('uber_registros_android', []).forEach(r => {
+        const add = (t, monto, notas = '') => monto > 0 && datos.push({ id: nid(), tipo: t, fecha: r.fecha, monto, notas });
+        add('ganancia', Number(r.ingresos || 0) + Number(r.propinas || 0), r.notas || '');
+        add('combustible', Number(r.combustible || 0));
+        add('otros', Number(r.otrosGastos || 0));
+    });
+    leer('uber_cargas_combustible', []).forEach(c => datos.push({ id: nid(), tipo: 'combustible', fecha: c.fecha, monto: Number(c.monto), notas: c.notas || '' }));
+    guardar();
+}
+
+// Orden de lo guardado: notas siempre texto y ningún id repetido
+let corregido = false;
+datos.forEach(d => { d.notas = d.notas || ''; ultimoId = Math.max(ultimoId, d.id || 0); });
+const vistos = new Set();
+datos.forEach(d => { if (!d.id || vistos.has(d.id)) { d.id = nid(); corregido = true; } vistos.add(d.id); });
+if (corregido) guardar();
+if (!verLS('uber_inicio')) ponerLS('uber_inicio', hoy());
+let papelera = leer('uber_papelera', []);
+
+// ---- Período ----
+// Rango [inicio, fin] (inclusive). Las fechas ISO se comparan como texto.
+function rango() {
+    if (periodo === 'todo') return ['0000-00-00', '9999-99-99'];
+    if (periodo === 'fechas') return desde <= hasta ? [desde, hasta] : [hasta, desde];
+    if (periodo === 'dia') return [ancla, ancla];
+    if (periodo === 'semana') return [lunes(ancla), sumarDias(lunes(ancla), 6)];
+    return [ancla.slice(0, 8) + '01', ancla.slice(0, 8) + '31'];
+}
+const enPeriodo = f => { const [a, b] = rango(); return f >= a && f <= b; };
+
+function mover(dir) {
+    if (periodo === 'fechas') {   // corre todo el rango tantos días como dura
+        const [a, b] = rango(), n = Math.round((Date.parse(b) - Date.parse(a)) / 864e5) + 1;
+        desde = sumarDias(a, dir * n);
+        hasta = sumarDias(b, dir * n);
+        return;
+    }
+    const [a, m, d] = ancla.split('-').map(Number);
+    ancla = aISO(periodo === 'mes' ? new Date(a, m - 1 + dir, 1) : new Date(a, m - 1, d + dir * (periodo === 'semana' ? 7 : 1)));
+}
+
+function nombrePeriodo() {
+    if (periodo === 'todo') return 'Todo el historial';
+    if (periodo === 'fechas') { const [a, b] = rango(); return a === b ? fechaCorta(a) : `${fechaCorta(a)} – ${fechaCorta(b)}`; }
+    if (periodo === 'dia') return (ancla === hoy() ? 'Hoy · ' : ancla === sumarDias(hoy(), -1) ? 'Ayer · ' : '') + fechaCorta(ancla);
+    if (periodo === 'semana') return (lunes(ancla) === lunes(hoy()) ? 'Esta semana · ' : '') + etiqueta(lunes(ancla), 'semana');
+    return etiqueta(ancla, 'mes');
+}
+
+const RAPIDOS = {
+    hoy: () => [hoy(), hoy()],
+    ayer: () => [sumarDias(hoy(), -1), sumarDias(hoy(), -1)],
+    semana: () => [lunes(hoy()), hoy()],
+    mes: () => [hoy().slice(0, 8) + '01', hoy()],
+    mespas: () => { const [a, m] = hoy().split('-').map(Number); return [aISO(new Date(a, m - 2, 1)), aISO(new Date(a, m - 1, 0))]; }
+};
+
+// ---- Pantallas ----
+function ir(v) {
+    if (v !== 'cargar' && editando) limpiarForm();
+    vista = v;
+    panelAbierto = false;
+    VISTAS.forEach(x => $('v-' + x).hidden = x !== v);
+    $('periodoBloque').hidden = v !== 'inicio' && v !== 'historial';
+    document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 'cargar' ? volverA || 'inicio' : v)));
+    window.scrollTo(0, 0);
+    actualizar();
+}
+
+function irA(destino) {   // del desglose al historial filtrado
+    filtro = destino;
+    abierto = false;
+    ir('historial');
+}
+
+function volver() {
+    const v = volverA || 'inicio';
+    limpiarForm();
+    ir(v);
+}
+
+function cargar(t) {
+    tipo = t;
+    limpiarForm();
+    ir('cargar');
+}
+
+const filaHTML = i => {
+    const t = T[i.tipo], gan = i.tipo === 'ganancia';
+    return `<div class="item">
+        <div style="min-width: 0; flex: 1; display: flex; align-items: center; gap: .75rem" onclick="editar(${i.id})">
+            <span class="dot" style="background: ${t.col}"></span>
+            <div style="min-width: 0">
+                <div>${fechaCorta(i.fecha)}</div>
+                <p class="nota">${t.sub}${i.notas ? ' · ' + escapar(i.notas) : ''}</p>
+            </div>
+        </div>
+        <div class="row" style="flex-shrink: 0; gap: .25rem">
+            <span class="monto-item" style="color: ${gan ? t.col : 'var(--txt)'}" onclick="editar(${i.id})">${gan ? '+' : ''}${plata(gan ? i.monto : -i.monto)}</span>
+            <button onclick="eliminar(${i.id})" aria-label="Eliminar" style="padding: .5rem; color: var(--sub)">✕</button>
+        </div>
+    </div>`;
+};
+
+function actualizar() {
+    document.querySelectorAll('#periodo button').forEach(b => b.classList.toggle('on', b.dataset.p === periodo));
+    document.querySelectorAll('#agrupar button').forEach(b => b.classList.toggle('on', b.dataset.g === agrupar));
+    $('ant').style.visibility = $('sig').style.visibility = periodo === 'todo' ? 'hidden' : '';
+    $('panel').hidden = !panelAbierto;
+    $('selFlecha').style.transform = panelAbierto ? 'rotate(180deg)' : '';
+    $('rango').hidden = periodo !== 'fechas';
+    $('etq').textContent = nombrePeriodo();
+    $('sig').disabled = rango()[1] >= hoy();
+    if ($('f-desde').value !== desde) $('f-desde').value = desde;
+    if ($('f-hasta').value !== hasta) $('f-hasta').value = hasta;
+
+    const items = ordenar(datos.filter(d => enPeriodo(d.fecha)));
+    const tot = { ganancia: 0, combustible: 0, otros: 0 };
+    items.forEach(i => tot[i.tipo] += i.monto);
+    const neta = tot.ganancia - tot.combustible, billetera = neta - tot.otros;
+    const color = n => n >= 0 ? T.ganancia.col : T.combustible.col;
+
+    // Inicio: ganancia neta y desglose desplegable (cada fila lleva al historial de ese tipo)
+    $('neto').textContent = plata(neta);
+    $('neto').style.color = color(neta);
+    const filas = [   // [nombre, a dónde lleva, monto, color del monto, color del punto]
+        ['Billetera', 'todo', billetera, color(billetera), 'var(--txt)'],
+        ['Bruto', 'ganancia', tot.ganancia, T.ganancia.col, T.ganancia.col],
+        ['Combustible', 'combustible', -tot.combustible, 'var(--txt)', T.combustible.col],
+        ['Otros gastos', 'otros', -tot.otros, 'var(--txt)', T.otros.col]
+    ];
+    $('desglose').hidden = !abierto;
+    $('flecha').style.transform = abierto ? 'rotate(180deg)' : '';
+    $('desglose').innerHTML = filas.map(([nombre, destino, v, cm, cp]) => `
+        <button class="fila" data-ir="${destino}"><span class="nombre"><span class="dot" style="background: ${cp}"></span>${nombre}</span>
+        <span><span style="color: ${cm}; font-variant-numeric: tabular-nums">${plata(v)}</span> <span style="color: var(--sub)">›</span></span></button>`).join('');
+    $('ultimos').innerHTML = ordenar([...datos]).slice(0, 3).map(filaHTML).join('')
+        || '<p class="vacio">Todavía no cargaste nada.<br>Empezá con una jornada o una carga de combustible.</p>';
+
+    // Historial
+    $('filtros').innerHTML = ['todo', ...Object.keys(T)].map(k =>
+        `<button data-f="${k}" class="${k === filtro ? 'on' : ''}">${k === 'todo' ? 'Todo' : T[k].nom}</button>`).join('');
+    const ver = items.filter(i => filtro === 'todo' || i.tipo === filtro);
+    $('cuenta').textContent = `${ver.length} ${ver.length === 1 ? 'registro' : 'registros'} · ${nombrePeriodo()}`;
+    $('lista').innerHTML = ver.map(filaHTML).join('')
+        || `<div class="vacio">No hay registros en este período.<br><button class="link" onclick="cargar('ganancia')">Cargar una jornada</button></div>`;
+    const rs = verLS('uber_respaldo');
+    const dias = rs ? diasDesde(rs) : 0;
+    $('respaldo').textContent = rs ? `Último respaldo: ${dias <= 0 ? 'hoy' : dias === 1 ? 'ayer' : `hace ${dias} días`}` : 'Todavía no hiciste un respaldo. Exportá el CSV de vez en cuando.';
+    const sinRespaldo = diasDesde(rs || verLS('uber_inicio') || hoy());
+    $('aviso').hidden = !(datos.length && sinRespaldo >= 7);
+    $('avisoTxt').textContent = rs ? `Hace ${sinRespaldo} días que no hacés un respaldo.` : 'Todavía no hiciste un respaldo de tus datos.';
+    $('btnRecuperar').hidden = !papelera.length;
+    $('btnRecuperar').textContent = `Recuperar el último eliminado (${papelera.length})`;
+
+    pintarGrupos();
+}
+
+// Detalle: una fila por semana (o por mes) con todo lo cargado; tocar una fila abre ese período en Inicio
+function pintarGrupos() {
+    const g = {};
+    datos.forEach(d => {
+        const k = agrupar === 'semana' ? lunes(d.fecha) : d.fecha.slice(0, 7);
+        (g[k] ||= { ganancia: 0, combustible: 0, otros: 0 })[d.tipo] += d.monto;
+    });
+    const claves = Object.keys(g).sort().reverse();
+    const limite = agrupar === 'semana' ? 8 : 12;
+    const actual = agrupar === 'semana' ? lunes(hoy()) : hoy().slice(0, 7);
+    $('grupos').innerHTML = claves.slice(0, verTodas ? undefined : limite).map(k => {
+        const x = g[k], neta = x.ganancia - x.combustible, billetera = neta - x.otros;
+        return `<div class="item" data-k="${k}" style="flex-direction: column; align-items: stretch; gap: .375rem; cursor: pointer">
+            <div class="row">
+                <span>${etiqueta(k)}${k === actual ? ' <span class="badge" style="padding: .125rem .5rem; background: var(--fill); border-radius: 9999px; color: var(--mut)">actual</span>' : ''}</span>
+                <span class="monto-item" style="color: ${neta >= 0 ? T.ganancia.col : T.combustible.col}">${plata(neta)}</span>
+            </div>
+            <div class="row peq" style="flex-wrap: wrap">
+                <span style="display: flex; gap: .75rem">${Object.keys(T).map(t => `<span style="display: inline-flex; align-items: center; gap: .3125rem"><span class="dot" style="background: ${T[t].col}"></span>${plata(t === 'ganancia' ? x[t] : -x[t])}</span>`).join('')}</span>
+                <span>billetera ${plata(billetera)}</span>
+            </div>
+        </div>`;
+    }).join('') || '<p class="vacio">Todavía no hay datos.</p>';
+    if (!verTodas && claves.length > limite) $('grupos').innerHTML += `<button id="vermas" class="link">Ver todas (${claves.length})</button>`;
+}
+
+// ---- Formulario ----
+function setTipo(t) {
+    tipo = t;
+    $('form').style.setProperty('--col', T[t].col);
+    $('tituloForm').textContent = editando ? 'Editar registro' : T[t].tit;
+    $('notas').placeholder = T[t].ph;
+    $('guardar').textContent = editando ? 'Guardar cambios' : 'Guardar ' + T[t].sub.toLowerCase();
+    $('cancelar').hidden = !editando;
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+}
+
+function limpiarForm() {
+    editando = volverA = null;
+    $('monto').value = $('notas').value = '';
+    $('fecha').value = hoy();
+    setTipo(tipo);
+}
+
+function editar(id) {
+    const d = datos.find(x => x.id === id);
+    if (!d) return;
+    editando = id;
+    volverA = vista;
+    $('fecha').value = d.fecha;
+    $('monto').value = d.monto;
+    $('notas').value = d.notas;
+    setTipo(d.tipo);
+    ir('cargar');
+}
+
+// Lo eliminado va a una papelera (últimos 30). "Deshacer" y "Recuperar" lo devuelven, aunque borres varios seguidos
+function eliminar(id) {
+    const d = datos.find(x => x.id === id);
+    if (!d) return;
+    datos = datos.filter(x => x.id !== id);
+    papelera = [...papelera, d].slice(-30);
+    guardarLS('uber_papelera', papelera);
+    guardar();
+    actualizar();
+    toast('Registro eliminado', 'Deshacer', recuperar);
+}
+
+function recuperar() {
+    const d = papelera.pop();
+    if (!d) return;
+    datos.push(d);
+    guardarLS('uber_papelera', papelera);
+    guardar();
+    toast(`Recuperado · ${fechaCorta(d.fecha)} · ${plata(d.monto)}`);
+    actualizar();
+}
+
+// ---- CSV ----
+const SUB = { 'Jornada': 'ganancia', 'Carga de combustible': 'combustible', 'Otro gasto': 'otros' };
+const num = s => parseFloat(String(s || '').replace(',', '.')) || 0;
+
+function partirCSV(linea) {
+    const celdas = []; let t = '', comillas = false;
+    for (let i = 0; i < linea.length; i++) {
+        const c = linea[i];
+        if (comillas) {
+            if (c === '"') { if (linea[i + 1] === '"') { t += '"'; i++; } else comillas = false; }
+            else t += c;
+        } else if (c === '"') comillas = true;
+        else if (c === ';') { celdas.push(t); t = ''; }
+        else t += c;
+    }
+    celdas.push(t);
+    return celdas;
+}
+
+// Lee el CSV nuevo (Fecha;Tipo;Monto;Notas) y también el de la primera versión de la app
+// (Fecha;Tipo;Ingresos;Combustible;OtrosGastos;Notas). No duplica lo que ya está cargado.
+function importarCSV(texto) {
+    const filas = texto.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim()).map(partirCSV);
+    if (filas.length < 2) throw new Error('vacío');
+    const viejo = (filas[0][2] || '').trim() === 'Ingresos';
+    const previos = datos.slice();
+    const agregar = [];
+    let repetidos = 0;
+    const sumar = (t, fecha, monto, notas) => {
+        if (!(monto > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return;
+        if (previos.some(d => d.tipo === t && d.fecha === fecha && d.monto === monto && d.notas === notas)) { repetidos++; return; }
+        agregar.push({ id: nid(), tipo: t, fecha, monto, notas });
+    };
+    filas.slice(1).forEach(f => {
+        const fecha = (f[0] || '').trim();
+        if (viejo) {
+            const notas = (f[5] || '').trim();
+            sumar('ganancia', fecha, num(f[2]), notas);
+            sumar('combustible', fecha, num(f[3]), (f[1] || '').trim() === 'Combustible' ? notas : '');
+            sumar('otros', fecha, num(f[4]), '');
+        } else if (SUB[(f[1] || '').trim()]) {
+            sumar(SUB[f[1].trim()], fecha, num(f[2]), (f[3] || '').trim());
+        }
+    });
+    datos = datos.concat(agregar);   // recién al final: si algo falla antes, no queda nada a medias
+    return { nuevos: agregar.length, repetidos };
+}
+
+$('archivo').onchange = async e => {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+    try {
+        const r = importarCSV(await archivo.text());
+        guardar();
+        actualizar();
+        toast(`Importados: ${r.nuevos} · Ya estaban: ${r.repetidos}`);
+    } catch (err) {
+        toast('No se pudo leer el archivo');
+    }
+    e.target.value = '';
+};
+
+async function exportarCSV() {
+    if (!datos.length) return toast('No hay datos para exportar');
+    const filas = ordenar([...datos]).map(d =>
+        `${d.fecha};${T[d.tipo].sub};${String(d.monto).replace('.', ',')};"${d.notas.replace(/"/g, '""')}"`);
+    const csv = '\uFEFF' + 'Fecha;Tipo;Monto;Notas\n' + filas.join('\n');
+    const listo = () => { ponerLS('uber_respaldo', hoy()); actualizar(); };
+    // En iPhone se abre el menú de compartir (Guardar en Archivos, AirDrop, WhatsApp...)
+    try {
+        const archivo = new File([csv], 'uber_datos.csv', { type: 'text/csv' });
+        if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+            await navigator.share({ files: [archivo] });
+            return listo();
+        }
+    } catch (err) {
+        if (err.name === 'AbortError') return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    a.download = 'uber_datos.csv';
+    a.click();
+    listo();
+}
+
+// ---- Eventos ----
+$('tabbar').onclick = e => { const b = e.target.closest('[data-v]'); if (b) ir(b.dataset.v); };
+$('selector').onclick = () => { panelAbierto = !panelAbierto; actualizar(); };
+$('periodo').onclick = e => {
+    if (!e.target.dataset.p) return;
+    periodo = e.target.dataset.p;
+    ponerLS('uber_periodo', periodo);
+    panelAbierto = periodo === 'fechas';   // "Fechas" queda abierto para elegir; el resto se cierra solo
+    actualizar();
+};
+$('ant').onclick = () => { mover(-1); actualizar(); };
+$('sig').onclick = () => { mover(1); actualizar(); };
+$('rapidos').onclick = e => { const f = RAPIDOS[e.target.dataset.r]; if (f) { [desde, hasta] = f(); panelAbierto = false; actualizar(); } };
+$('f-desde').onchange = e => { desde = e.target.value || desde; actualizar(); };
+$('f-hasta').onchange = e => { hasta = e.target.value || hasta; actualizar(); };
+$('cabecera').onclick = () => { abierto = !abierto; actualizar(); };
+$('desglose').onclick = e => { const b = e.target.closest('[data-ir]'); if (b) irA(b.dataset.ir); };
+$('filtros').onclick = e => { if (e.target.dataset.f) { filtro = e.target.dataset.f; actualizar(); } };
+$('agrupar').onclick = e => {
+    if (!e.target.dataset.g) return;
+    agrupar = e.target.dataset.g;
+    verTodas = false;
+    ponerLS('uber_agrupar', agrupar);
+    actualizar();
+};
+$('grupos').onclick = e => {
+    if (e.target.id === 'vermas') { verTodas = true; return actualizar(); }
+    const fila = e.target.closest('[data-k]');
+    if (!fila) return;
+    periodo = agrupar;
+    ancla = agrupar === 'semana' ? fila.dataset.k : fila.dataset.k + '-01';
+    ponerLS('uber_periodo', periodo);
+    ir('inicio');
+};
+$('tabs').onclick = e => e.target.dataset.t && setTipo(e.target.dataset.t);
+$('form').onclick = e => { if (e.target.dataset.d !== undefined) $('fecha').value = sumarDias(hoy(), Number(e.target.dataset.d)); };
+$('cancelar').onclick = $('volver').onclick = volver;
+$('btnRecuperar').onclick = recuperar;
+$('form').onsubmit = e => {
+    e.preventDefault();
+    const reg = { tipo, fecha: $('fecha').value, monto: parseFloat($('monto').value) || 0, notas: $('notas').value.trim() };
+    if (!(reg.monto > 0)) return toast('El monto tiene que ser mayor a 0');
+    if (editando) {
+        Object.assign(datos.find(d => d.id === editando), reg);
+        guardar();
+        const v = volverA || 'historial';
+        limpiarForm();
+        toast('Cambios guardados');
+        ir(v);
+    } else {
+        datos.push({ id: nid(), ...reg });
+        guardar();
+        $('monto').value = $('notas').value = '';
+        toast(`Guardado · ${plata(reg.monto)}`);
+        actualizar();
+    }
+};
+
+// Si la app quedó abierta de un día para otro, vuelve a "hoy"
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden || diaCargado === hoy()) return;
+    diaCargado = ancla = hoy();
+    if (!editando) $('fecha').value = hoy();
+    actualizar();
+});
+
+limpiarForm();
+ir('inicio');
+
+// Si el almacenamiento normal quedó vacío pero la copia interna tiene datos, se recuperan
+leerEspejo().then(copia => {
+    if (!datos.length && copia && copia.length) {
+        datos = copia;
+        guardar();
+        toast(`Se recuperaron ${copia.length} registros`);
+        actualizar();
+    }
+    espejoListo = true;
+    espejo(datos);
+});
+
+// Pide al sistema que no borre los datos si falta espacio, y deja la app lista para usar sin internet
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>
